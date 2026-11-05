@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "profile": "sdk-minimal",
+    "turnsPerRun": 20,
+    "runsPerConfig": 3,
+    "node": "v24.21.0",
+    "platform": "win32 x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13700KF",
+    "note": "Turn execution only (boot excluded). Each config ran 3 times; values are medians of the runs."
+  },
+  "configs": [
+    { "id": "serial", "label": "8 view calls, serial (today)", "msPerTurn": 45.5, "runs": [45.5, 44.9, 45.7] },
+    { "id": "serial-plain", "label": "8 view calls, serial, no session compression", "msPerTurn": 40.6, "runs": [40.8, 40.2, 40.6] },
+    { "id": "parallel", "label": "8 view calls, concurrency-safe", "msPerTurn": 24.2, "runs": [24.3, 24.7, 25.6] },
+    { "id": "no-tools", "label": "no tool calls (turn floor)", "msPerTurn": 8.7, "runs": [9.1, 8.4, 8.7] },
+    { "id": "no-tools-plain", "label": "no tool calls, no compression", "msPerTurn": 8.4, "runs": [8.4, 8.2, 8.9] }
+  ]
+}

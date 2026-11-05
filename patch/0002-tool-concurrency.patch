@@ -1,0 +1,106 @@
+diff --git a/packages/fs/tool-fs-search/src/glob.ts b/packages/fs/tool-fs-search/src/glob.ts
+index 31df85aa53..388fc4faf5 100644
+--- a/packages/fs/tool-fs-search/src/glob.ts
++++ b/packages/fs/tool-fs-search/src/glob.ts
+@@ -333,6 +333,8 @@ export function applyGlobTool(ctx: Context, caps: GlobToolCaps): void {
+       path: { type: 'string', description: 'Directory to search in. Defaults to the session workspace; a relative path resolves against it.' },
+     },
+     timeoutMs: caps.timeoutMs,
++    // A search only reads; large results spill to per-call files.
++    isConcurrencySafe: () => true,
+     output: {
+       schema: {
+         type: 'object',
+diff --git a/packages/fs/tool-fs-search/src/grep.ts b/packages/fs/tool-fs-search/src/grep.ts
+index e0246d6b76..22fa886606 100644
+--- a/packages/fs/tool-fs-search/src/grep.ts
++++ b/packages/fs/tool-fs-search/src/grep.ts
+@@ -293,6 +293,8 @@ export function applyGrepTool(ctx: Context, caps: GrepToolCaps): void {
+       include: { type: 'string', description: 'One glob filter for which files to search (e.g. "*.ts", "*.{js,jsx}"). Not a list; negation is not supported.' },
+     },
+     timeoutMs: caps.timeoutMs,
++    // A search only reads; large results spill to per-call files.
++    isConcurrencySafe: () => true,
+     output: {
+       schema: {
+         type: 'object',
+diff --git a/packages/fs/tool-fs-search/tests/tools.spec.ts b/packages/fs/tool-fs-search/tests/tools.spec.ts
+index 5763aacc15..2f9c8e1eab 100644
+--- a/packages/fs/tool-fs-search/tests/tools.spec.ts
++++ b/packages/fs/tool-fs-search/tests/tools.spec.ts
+@@ -21,6 +21,7 @@ import { createUserMessage, ToolCallId } from '@deepseek-ai/dsh-llm'
+ import type { ContextFormed } from '@deepseek-ai/dsh-llm'
+ import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
+ import ToolRuntime, { TOOL_ABORTED_BEFORE_DISPATCH, type ToolExecution, type ToolExecutionToken } from '@deepseek-ai/dsh-tools'
++import { ToolExecutionPipeline } from '@deepseek-ai/dsh-tools/pipeline'
+ import { SubprocessRuntime } from '@deepseek-ai/dsh-subprocess'
+ import type { SubprocessCollectedOutputs, SubprocessHandle, SubprocessOutcome, SubprocessOutputRead, SubprocessOutputReader, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
+ import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+@@ -1324,3 +1325,18 @@ describe('scope-aware search guidance', () => {
+ function withPersona(...sections: string[]): string {
+   return ['You are an AI agent powered by DeepSeek Harness.', ...sections].join('\n\n')
+ }
++
++describe('search tool concurrency classification', () => {
++  it('runs glob and grep in parallel groups', async () => {
++    const { ctx } = await setup()
++    const pipeline = new ToolExecutionPipeline(ctx)
++    const mode = (name: string, args: Record<string, unknown>) => pipeline.executionMode({
++      signal: new AbortController().signal,
++      callId: ToolCallId('classify'),
++      name,
++      arguments: args,
++    })
++    expect(mode('glob', { pattern: '*.ts' })).toEqual({ kind: 'parallel' })
++    expect(mode('grep', { pattern: 'needle' })).toEqual({ kind: 'parallel' })
++  })
++})
+\ No newline at end of file
+diff --git a/packages/fs/tool-str-replace-editor/src/index.ts b/packages/fs/tool-str-replace-editor/src/index.ts
+index 3542ee1770..496eac98d1 100644
+--- a/packages/fs/tool-str-replace-editor/src/index.ts
++++ b/packages/fs/tool-str-replace-editor/src/index.ts
+@@ -465,6 +465,9 @@ function registerStrReplaceEditor(ctx: Context, config: ResolvedConfig): void {
+         description: 'Optional parameter of `view` command when `path` points to a file. If omitted or null, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file.',
+       },
+     },
++    // `view` only reads a file or directory; the mutating commands must not
++    // overlap each other or a view that could observe a half-written file.
++    isConcurrencySafe: args => args.command === 'view',
+     output: {
+       schema: { type: 'string' },
+       render: (_args, value) => [{ type: 'text', text: value }],
+diff --git a/packages/fs/tool-str-replace-editor/tests/tools.spec.ts b/packages/fs/tool-str-replace-editor/tests/tools.spec.ts
+index 14de14c4cd..b56ad90929 100644
+--- a/packages/fs/tool-str-replace-editor/tests/tools.spec.ts
++++ b/packages/fs/tool-str-replace-editor/tests/tools.spec.ts
+@@ -17,6 +17,7 @@ import SandboxPolicy from '@deepseek-ai/dsh-sandbox-policy'
+ import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
+ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+ import ToolRuntime from '@deepseek-ai/dsh-tools'
++import { ToolExecutionPipeline } from '@deepseek-ai/dsh-tools/pipeline'
+ import * as ToolStrReplaceEditor from '@deepseek-ai/dsh-tool-str-replace-editor'
+ import { unsupportedModel, unsupportedInbox } from '@deepseek-ai/dsh-agent-loop-testkit'
+ 
+@@ -665,3 +666,20 @@ describe('tool-str-replace-editor', () => {
+     }).toThrow('description must be non-empty')
+   })
+ })
++
++describe('str_replace_editor concurrency classification', () => {
++  it('lets read-only views overlap and keeps mutations exclusive', async () => {
++    const { ctx } = await setup()
++    const pipeline = new ToolExecutionPipeline(ctx)
++    const mode = (args: Record<string, unknown>) => pipeline.executionMode({
++      signal: new AbortController().signal,
++      callId: ToolCallId('classify'),
++      name: 'str_replace_editor',
++      arguments: args,
++    })
++    expect(mode({ command: 'view', path: '/tmp/x' })).toEqual({ kind: 'parallel' })
++    expect(mode({ command: 'create', path: '/tmp/x', file_text: 'x' })).toEqual({ kind: 'exclusive' })
++    expect(mode({ command: 'str_replace', path: '/tmp/x', old_str: 'a', new_str: 'b' })).toEqual({ kind: 'exclusive' })
++    expect(mode({ command: 'insert', path: '/tmp/x', insert_line: 1, new_str: 'a' })).toEqual({ kind: 'exclusive' })
++  })
++})
+\ No newline at end of file

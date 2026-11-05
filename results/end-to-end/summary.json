@@ -1,0 +1,377 @@
+{
+  "meta": {
+    "profile": "sdk-minimal",
+    "turns": 100,
+    "requests": 200,
+    "toolCalls": 800,
+    "dshVersion": "0.2.2-alpha.2",
+    "node": "v24.21.0",
+    "platform": "win32 x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-13700KF",
+    "cores": 24,
+    "pairs": 26,
+    "method": "Built artifacts; only vendor/cordis/lib was swapped between arms; each arm measured in its own process."
+  },
+  "metrics": {
+    "turnExecutionMs": {
+      "baseMedian": 4680.63515,
+      "patchedMedian": 4546.536099999999,
+      "medianDiff": -144.60720000000038,
+      "medianRelativePct": -3.1211366455212084,
+      "meanDiff": -209.4672884615385,
+      "ci95": [
+        -231.49099999999953,
+        -55.46270000000004
+      ],
+      "ci95RelativePct": [
+        -5.028807385507793,
+        -1.1618312869732885
+      ],
+      "fasterPairs": 21,
+      "pairs": 26,
+      "signTestP": 0.0024939179420471417
+    },
+    "totalMs": {
+      "baseMedian": 5370.25655,
+      "patchedMedian": 5236.3079,
+      "medianDiff": -141.6014,
+      "medianRelativePct": -2.700314136590195,
+      "meanDiff": -210.50654615384613,
+      "ci95": [
+        -249.32434999999987,
+        -57.75630000000001
+      ],
+      "ci95RelativePct": [
+        -4.626008298281663,
+        -1.0733762879853848
+      ],
+      "fasterPairs": 22,
+      "pairs": 26,
+      "signTestP": 0.0005335211753845256
+    },
+    "bootMs": {
+      "baseMedian": 661.6147000000001,
+      "patchedMedian": 658.4534,
+      "medianDiff": 1.1517499999999927,
+      "medianRelativePct": 0.17564098058237645,
+      "meanDiff": -0.6132500000000024,
+      "ci95": [
+        -7.9515499999999975,
+        7.03694999999999
+      ],
+      "ci95RelativePct": [
+        -1.1759268606853992,
+        1.0760529604304376
+      ],
+      "fasterPairs": 12,
+      "pairs": 26,
+      "signTestP": 0.8450189828872724
+    },
+    "perTurnMedianMs": {
+      "baseMedian": 43.57470000000012,
+      "patchedMedian": 41.96615000000003,
+      "medianDiff": -1.4953999999999041,
+      "medianRelativePct": -3.4656800361908493,
+      "meanDiff": -2.6274538461538555,
+      "ci95": [
+        -2.2706000000001154,
+        -1.2723000000000866
+      ],
+      "ci95RelativePct": [
+        -5.213076337078857,
+        -2.984755134783102
+      ],
+      "fasterPairs": 24,
+      "pairs": 26,
+      "signTestP": 0.000010490417480468745
+    }
+  },
+  "pairs": [
+    {
+      "run": 1,
+      "baseMs": 4649.896200000001,
+      "patchedMs": 4485.0491999999995,
+      "baseTotalMs": 5366.091,
+      "patchedTotalMs": 5179.0878,
+      "baseBootMs": 689.5047999999999,
+      "patchedBootMs": 672.207,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 2,
+      "baseMs": 4479.3649000000005,
+      "patchedMs": 4616.413500000001,
+      "baseTotalMs": 5144.4278,
+      "patchedTotalMs": 5321.8092,
+      "baseBootMs": 642.1369,
+      "patchedBootMs": 663.8261,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 3,
+      "baseMs": 4837.0533,
+      "patchedMs": 4772.893099999999,
+      "baseTotalMs": 5544.4336,
+      "patchedTotalMs": 5458.3398,
+      "baseBootMs": 672.4148,
+      "patchedBootMs": 664.0903999999999,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 4,
+      "baseMs": 4552.981000000001,
+      "patchedMs": 4373.6152999999995,
+      "baseTotalMs": 5208.687800000001,
+      "patchedTotalMs": 5045.0191,
+      "baseBootMs": 635.1234999999999,
+      "patchedBootMs": 649.7641,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 5,
+      "baseMs": 4540.4967,
+      "patchedMs": 4309.9979,
+      "baseTotalMs": 5225.8457,
+      "patchedTotalMs": 4987.7619,
+      "baseBootMs": 655.7939,
+      "patchedBootMs": 657.8768,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 6,
+      "baseMs": 4566.598400000001,
+      "patchedMs": 4355.986000000001,
+      "baseTotalMs": 5249.7574,
+      "patchedTotalMs": 5039.9466,
+      "baseBootMs": 663.1824,
+      "patchedBootMs": 654.7057,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 7,
+      "baseMs": 4611.1572,
+      "patchedMs": 4486.7898000000005,
+      "baseTotalMs": 5292.8594,
+      "patchedTotalMs": 5173.3253,
+      "baseBootMs": 652.5658,
+      "patchedBootMs": 655.4195,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 8,
+      "baseMs": 4396.1166,
+      "patchedMs": 4293.528,
+      "baseTotalMs": 5068.9629,
+      "patchedTotalMs": 4987.3055,
+      "baseBootMs": 648.5841,
+      "patchedBootMs": 674.0547,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 9,
+      "baseMs": 4495.5495,
+      "patchedMs": 4277.138800000001,
+      "baseTotalMs": 5181.0623000000005,
+      "patchedTotalMs": 4955.9301000000005,
+      "baseBootMs": 664.4093,
+      "patchedBootMs": 659.0157999999999,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 10,
+      "baseMs": 4743.8217,
+      "patchedMs": 4928.556199999999,
+      "baseTotalMs": 5433.8819,
+      "patchedTotalMs": 5616.6533,
+      "baseBootMs": 666.6401,
+      "patchedBootMs": 658.8009,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 11,
+      "baseMs": 4752.3747,
+      "patchedMs": 4716.1971,
+      "baseTotalMs": 5445.3466,
+      "patchedTotalMs": 5408.6452,
+      "baseBootMs": 672.4198,
+      "patchedBootMs": 668.9622999999999,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 12,
+      "baseMs": 4863.4056,
+      "patchedMs": 4618.8343,
+      "baseTotalMs": 5574.3175,
+      "patchedTotalMs": 5300.801,
+      "baseBootMs": 676.2121,
+      "patchedBootMs": 652.6621,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 13,
+      "baseMs": 4901.624699999999,
+      "patchedMs": 4836.3899,
+      "baseTotalMs": 5619.3081,
+      "patchedTotalMs": 5531.414400000001,
+      "baseBootMs": 681.1476,
+      "patchedBootMs": 673.7212000000001,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 14,
+      "baseMs": 4714.2257,
+      "patchedMs": 4360.025799999999,
+      "baseTotalMs": 5419.0114,
+      "patchedTotalMs": 5046.424,
+      "baseBootMs": 675.9669,
+      "patchedBootMs": 658.1059,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 15,
+      "baseMs": 4609.7729,
+      "patchedMs": 4740.724,
+      "baseTotalMs": 5298.4326,
+      "patchedTotalMs": 5430.722699999999,
+      "baseBootMs": 664.3303000000001,
+      "patchedBootMs": 667.4404999999999,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 16,
+      "baseMs": 4688.1063,
+      "patchedMs": 4262.2287,
+      "baseTotalMs": 5374.4221,
+      "patchedTotalMs": 4936.4593,
+      "baseBootMs": 664.7157,
+      "patchedBootMs": 648.5537,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 17,
+      "baseMs": 4714.486099999999,
+      "patchedMs": 4643.099,
+      "baseTotalMs": 5380.8063999999995,
+      "patchedTotalMs": 5323.0500999999995,
+      "baseBootMs": 644.5357,
+      "patchedBootMs": 657.4485,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 18,
+      "baseMs": 4602.282,
+      "patchedMs": 4556.591399999999,
+      "baseTotalMs": 5275.0548,
+      "patchedTotalMs": 5255.1276,
+      "baseBootMs": 637.75,
+      "patchedBootMs": 674.8321000000001,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 19,
+      "baseMs": 5278.816,
+      "patchedMs": 4536.4808,
+      "baseTotalMs": 5930.377,
+      "patchedTotalMs": 5217.4882,
+      "baseBootMs": 630.9453,
+      "patchedBootMs": 653.534,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 20,
+      "baseMs": 4518.7887,
+      "patchedMs": 4980.4964,
+      "baseTotalMs": 5204.589,
+      "patchedTotalMs": 5669.5804,
+      "baseBootMs": 664.2124,
+      "patchedBootMs": 668.9927,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 21,
+      "baseMs": 5851.7948,
+      "patchedMs": 4865.2878,
+      "baseTotalMs": 6724.067599999999,
+      "patchedTotalMs": 5692.8566,
+      "baseBootMs": 839.8771,
+      "patchedBootMs": 788.0376,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 22,
+      "baseMs": 6014.989799999999,
+      "patchedMs": 4719.5208,
+      "baseTotalMs": 6693.5769,
+      "patchedTotalMs": 5401.619000000001,
+      "baseBootMs": 642.6562,
+      "patchedBootMs": 657.7076000000001,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 23,
+      "baseMs": 4837.809399999999,
+      "patchedMs": 4472.3719,
+      "baseTotalMs": 5516.066,
+      "patchedTotalMs": 5163.3797,
+      "baseBootMs": 655.7361999999999,
+      "patchedBootMs": 662.2399,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 24,
+      "baseMs": 4475.658100000001,
+      "patchedMs": 4503.8644,
+      "baseTotalMs": 5158.1801,
+      "patchedTotalMs": 5157.527700000001,
+      "baseBootMs": 660.047,
+      "patchedBootMs": 633.4501,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 25,
+      "baseMs": 4673.164000000001,
+      "patchedMs": 4631.6893,
+      "baseTotalMs": 5350.2941,
+      "patchedTotalMs": 5318.2265,
+      "baseBootMs": 648.808,
+      "patchedBootMs": 658.1016,
+      "requests": 200,
+      "toolCalls": 800
+    },
+    {
+      "run": 26,
+      "baseMs": 4942.7614,
+      "patchedMs": 4523.1768,
+      "baseTotalMs": 5622.4997,
+      "patchedTotalMs": 5210.6885,
+      "baseBootMs": 655.2424,
+      "patchedBootMs": 655.463,
+      "requests": 200,
+      "toolCalls": 800
+    }
+  ]
+}

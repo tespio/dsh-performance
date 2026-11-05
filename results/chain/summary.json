@@ -1,0 +1,85 @@
+{
+    "meta":  {
+                 "workload":  "sdk-minimal profile, synthetic model, 100 turns = 200 model requests + 800 tool calls",
+                 "platform":  "win32 x64, i7-13700KF, Node 24.21.0",
+                 "rounds":  8,
+                 "method":  "Built artifacts; vendor/cordis/lib and the two fs tool libs swapped between arms; rotating arm order each round.",
+                 "node":  "v24.21.0"
+             },
+    "arms":  {
+                 "base":  {
+                              "label":  "baseline",
+                              "medianMs":  5064.2495499999995,
+                              "runs":  8,
+                              "bootMedianMs":  670.5957000000001
+                          },
+                 "cordis":  {
+                                "label":  "+ Cordis hot paths",
+                                "medianMs":  4678.4629,
+                                "runs":  8,
+                                "bootMedianMs":  665.5581500000001
+                            },
+                 "both":  {
+                              "label":  "+ tool concurrency",
+                              "medianMs":  2416.89855,
+                              "runs":  8,
+                              "bootMedianMs":  663.46835
+                          }
+             },
+    "combined":  {
+                     "speedup":  2.0953504854392833,
+                     "deltaPct":  -52.27528726344064,
+                     "cordisPct":  -7.617844385255444,
+                     "toolsPct":  -48.3399013381083
+                 },
+    "pairs":  [
+                  {
+                      "run":  1,
+                      "baseMs":  5398.6221,
+                      "cordisMs":  4749.844300000001,
+                      "bothMs":  2375.9843
+                  },
+                  {
+                      "run":  2,
+                      "baseMs":  4893.663500000001,
+                      "cordisMs":  5317.3618,
+                      "bothMs":  2395.6252000000004
+                  },
+                  {
+                      "run":  3,
+                      "baseMs":  5052.7256,
+                      "cordisMs":  4666.5885,
+                      "bothMs":  2497.3012
+                  },
+                  {
+                      "run":  4,
+                      "baseMs":  5090.6926,
+                      "cordisMs":  4690.3373,
+                      "bothMs":  2564.1216
+                  },
+                  {
+                      "run":  5,
+                      "baseMs":  5075.773499999999,
+                      "cordisMs":  4662.1688,
+                      "bothMs":  2281.4064
+                  },
+                  {
+                      "run":  6,
+                      "baseMs":  4890.337600000001,
+                      "cordisMs":  4285.0072,
+                      "bothMs":  2327.125
+                  },
+                  {
+                      "run":  7,
+                      "baseMs":  4625.2609999999995,
+                      "cordisMs":  4556.9555,
+                      "bothMs":  2516.8203000000003
+                  },
+                  {
+                      "run":  8,
+                      "baseMs":  5653.491399999999,
+                      "cordisMs":  5214.225300000001,
+                      "bothMs":  2438.1719
+                  }
+              ]
+}

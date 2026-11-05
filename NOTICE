@@ -1,0 +1,19 @@
+# Third-party notices
+
+## vendor/cordis and vendor/cosmokit
+
+The source trees under `vendor/` are unmodified copies of the Cordis framework
+and its foundation library as vendored by
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
+(`vendor/cordis`, `vendor/cosmokit`), which are in turn derived from:
+
+- Cordis — https://github.com/cordiverse/cordis — MIT, Copyright (c) Shigma
+- Cosmokit — https://github.com/shigma/cosmokit — MIT
+
+Both keep their upstream `LICENSE` files. They are included only so this
+repository can build a reproducible baseline; they are not modified here. The
+patch under `patch/` is applied to `.work/patched/` at benchmark time and is the
+only difference between the two measured trees.
+
+If you only want the benchmark harness and the write-up, you can ignore
+`vendor/` entirely and point the harness at your own Cordis checkout.

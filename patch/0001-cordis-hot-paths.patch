@@ -1,0 +1,295 @@
+diff --git a/vendor/cordis/src/events.ts b/vendor/cordis/src/events.ts
+index c7bf42632e..b5cb048c6b 100644
+--- a/vendor/cordis/src/events.ts
++++ b/vendor/cordis/src/events.ts
+@@ -129,7 +129,9 @@ export interface Hook extends EventOptions {
+  * dispatch and automatically disposes listeners with their owning fiber.
+  */
+ export class EventsService {
+-  _hooks: Record<keyof any, Hook[]> = {}
++  // Null prototype: event names come from plugins and may collide with
++  // `Object.prototype` members (for example `constructor` or `toString`).
++  _hooks: Record<keyof any, Hook[]> = Object.create(null)
+ 
+   constructor(private ctx: Context) {
+     defineProperty(this, symbols.tracker, {
+@@ -156,22 +158,40 @@ export class EventsService {
+   }
+ 
+   /**
+-   * Resolve listeners for one dispatch and apply context filtering.
++   * Consume the optional dispatch `this` and event name from raw arguments.
+    *
+    * @param type — the dispatch mode, reported on `internal/dispatch`.
+    * @param args — the raw dispatch arguments; consumed up to the event name.
+-   * @returns the matching listener callbacks, bound to the dispatch `this`.
++   * @returns the dispatch `this` and the event name.
+    */
+-  dispatch(type: string, args: any[]) {
++  private _open(type: string, args: any[]) {
+     const thisArg = typeof args[0] === 'object' || typeof args[0] === 'function' ? args.shift() : null
+     const name: string = args.shift()
+-    if (!name.startsWith('internal/')) {
++    if (!name.startsWith('internal/') && this._hooks['internal/dispatch']?.length) {
+       this.emit('internal/dispatch', type, name, args, thisArg)
+     }
++    return { thisArg, name }
++  }
++
++  /**
++   * Resolve listeners for one dispatch and apply context filtering.
++   *
++   * @param type — the dispatch mode, reported on `internal/dispatch`.
++   * @param args — the raw dispatch arguments; consumed up to the event name.
++   * @returns the matching listener callbacks, bound to the dispatch `this`.
++   */
++  dispatch(type: string, args: any[]) {
++    const { thisArg, name } = this._open(type, args)
++    const callbacks: ((...args: any[]) => any)[] = []
++    const hooks = this._hooks[name]
++    if (!hooks?.length) return callbacks
+     const filter = thisArg?.[Context.filter]
+-    return (this._hooks[name] || [])
+-      .filter(hook => hook.global || !filter || filter.call(thisArg, hook.ctx))
+-      .map(hook => hook.callback.bind(thisArg))
++    for (const hook of hooks) {
++      if (hook.global || !filter || filter.call(thisArg, hook.ctx)) {
++        callbacks.push(hook.callback.bind(thisArg))
++      }
++    }
++    return callbacks
+   }
+ 
+   /**
+@@ -192,7 +212,17 @@ export class EventsService {
+    * @param args — optional `this`, the event name, then listener arguments.
+    */
+   emit(...args: any[]) {
+-    this.dispatch('emit', args).map(cb => cb(...args))
++    const { thisArg, name } = this._open('emit', args)
++    const hooks = this._hooks[name]
++    if (!hooks?.length) return
++    const filter = thisArg?.[Context.filter]
++    // Snapshot the registrations: a listener may add or remove listeners while
++    // this dispatch runs, and those changes must not affect the current round.
++    const snapshot = hooks.slice()
++    for (const hook of snapshot) {
++      if (filter && !hook.global && !filter.call(thisArg, hook.ctx)) continue
++      Reflect.apply(hook.callback, thisArg, args)
++    }
+   }
+ 
+   /**
+diff --git a/vendor/cordis/src/reflect.ts b/vendor/cordis/src/reflect.ts
+index 7bbe1ae991..ba793bcba3 100644
+--- a/vendor/cordis/src/reflect.ts
++++ b/vendor/cordis/src/reflect.ts
+@@ -77,6 +77,31 @@ function enhanceError(error: Error) {
+   return error
+ }
+ 
++/**
++ * Build an Error-shaped diagnostic carrier without capturing a stack.
++ *
++ * Accessor `get`/`set` hooks receive the carrier for diagnostics; capturing a
++ * stack for it on every context read dominates reads that otherwise only
++ * forward a service. The stack materializes on first read instead.
++ *
++ * @param message — the diagnostic message, also used when the stack is captured.
++ * @returns an object with `Error.prototype`, so `instanceof`, `name`, `message`,
++ * and `toString` behave like an ordinary error.
++ */
++function diagnosticError(message: string): Error {
++  const error = Object.create(Error.prototype) as Error
++  error.message = message
++  Object.defineProperty(error, 'stack', {
++    configurable: true,
++    get() {
++      const stack = new Error(message).stack
++      Object.defineProperty(error, 'stack', { value: stack, writable: true, configurable: true })
++      return stack
++    },
++  })
++  return error
++}
++
+ const RESERVED_WORDS = ['prototype', 'then']
+ 
+ // - is a symbol
+@@ -141,30 +166,42 @@ export class ReflectService {
+         return getTraceable(ctx, Reflect.get(target, prop, ctx))
+       }
+ 
+-      const error = new Error(`cannot get property "${prop}" without inject`)
+-
+-      try {
+-        const def = target.reflect.props[prop]
+-        if (def?.type === 'accessor') {
+-          return def.get.call(ctx, ctx[symbols.receiver], error)
+-        }
++      const def = target.reflect.props[prop]
++      if (def?.type === 'accessor') {
++        return def.get.call(ctx, ctx[symbols.receiver], diagnosticError(`cannot get property "${prop}" without inject`))
++      }
+ 
++      let error: Error | undefined
++      const resolve = () => {
+         if (!ctx.fiber.runtime) return ctx.reflect.get(prop, false)
+-        return ctx.events.waterfall('internal/get', ctx, prop, error, () => {
+-          const key = target[symbols.isolate][prop]
+-          let fiber = (ctx[symbols.shadow] as Context ?? ctx).fiber
+-          while (true) {
+-            const impl = fiber.store?.[prop]
+-            if (impl) return getTraceable(ctx, impl.value)
+-            if (prop in fiber.inject) {
+-              error.message = `cannot get required service "${prop}" in inactive context`
+-              throw error
+-            }
+-            if (!fiber.runtime) throw error
+-            if (fiber.parent[symbols.isolate][prop] !== key) throw error
+-            fiber = fiber.parent.fiber
++        const key = target[symbols.isolate][prop]
++        let fiber = (ctx[symbols.shadow] as Context ?? ctx).fiber
++        while (true) {
++          const impl = fiber.store?.[prop]
++          if (impl) return getTraceable(ctx, impl.value)
++          if (prop in fiber.inject) {
++            error ??= new Error()
++            error.message = `cannot get required service "${prop}" in inactive context`
++            throw error
+           }
+-        })
++          if (!fiber.runtime) {
++            error ??= new Error(`cannot get property "${prop}" without inject`)
++            throw error
++          }
++          if (fiber.parent[symbols.isolate][prop] !== key) {
++            error ??= new Error(`cannot get property "${prop}" without inject`)
++            throw error
++          }
++          fiber = fiber.parent.fiber
++        }
++      }
++
++      try {
++        // The dispatch error only reaches `internal/get` listeners and the
++        // failure path, so an unobserved waterfall must not capture one.
++        if (!target.events._hooks['internal/get']?.length) return resolve()
++        error = new Error(`cannot get property "${prop}" without inject`)
++        return ctx.events.waterfall('internal/get', ctx, prop, error, resolve)
+       } catch (e: any) {
+         throw e === error ? enhanceError(e) : e
+       }
+@@ -175,19 +212,21 @@ export class ReflectService {
+         return Reflect.set(target, prop, value, ctx)
+       }
+ 
+-      const error = new Error(`cannot set property "${prop}" without provide`)
+       const def = target.reflect.props[prop]
+       if (!def) {
+         if (!ctx.fiber.runtime) return Reflect.set(target, prop, value, ctx)
+-        throw enhanceError(error)
++        throw enhanceError(new Error(`cannot set property "${prop}" without provide`))
+       }
+ 
+-      try {
+-        if (def.type === 'accessor') {
+-          if (!def.set) return false
+-          return def.set.call(ctx, value, ctx[symbols.receiver], error)
+-        }
++      if (def.type === 'accessor') {
++        if (!def.set) return false
++        return def.set.call(ctx, value, ctx[symbols.receiver], diagnosticError(`cannot set property "${prop}" without provide`))
++      }
+ 
++      let error: Error | undefined
++      try {
++        if (!target.events._hooks['internal/set']?.length) return ctx.reflect.set(prop, value)
++        error = new Error(`cannot set property "${prop}" without provide`)
+         return ctx.events.waterfall('internal/set', ctx, prop, value, error, () => {
+           return ctx.reflect.set(prop, value, error)
+         })
+@@ -402,17 +441,20 @@ export class ReflectService {
+   /**
+    * Wrap a callback so calls trace `this` and arguments to this context.
+    *
++   * Returns an ordinary function rather than a Proxy: event dispatch binds
++   * these wrappers before every call, and binding a Proxy function takes the
++   * engine slow path an order of magnitude more expensive than binding a
++   * plain function.
++   *
+    * @param callback — the function to wrap.
+-   * @returns a proxy delegating to `callback` with traced values.
++   * @returns a function delegating to `callback` with traced values.
+    */
+   bind<T extends Function>(callback: T) {
+-    return new Proxy(callback, {
+-      apply: (target, thisArg, args) => {
+-        return Reflect.apply(target, this.trace(thisArg), args.map(arg => this.trace(arg)))
+-      },
+-      construct: (target, args, newTarget) => {
+-        return Reflect.construct(target, args.map(arg => this.trace(arg)), newTarget)
+-      },
+-    })
++    const reflect = this
++    return function (this: any, ...args: any[]) {
++      const traced = args.map(arg => reflect.trace(arg))
++      if (new.target) return Reflect.construct(callback, traced)
++      return Reflect.apply(callback, reflect.trace(this), traced)
++    } as unknown as T
+   }
+ }
+diff --git a/vendor/cordis/src/utils.ts b/vendor/cordis/src/utils.ts
+index 024d21f5e0..c7a5d8a750 100644
+--- a/vendor/cordis/src/utils.ts
++++ b/vendor/cordis/src/utils.ts
+@@ -113,6 +113,16 @@ export function getPropertyDescriptor(target: any, prop: string | symbol) {
+   }
+ }
+ 
++/**
++ * Traceable proxies already built for one context and one value.
++ *
++ * A wrapper's behavior depends on the context that reads it and the value it
++ * wraps, not on the property read that produced it, so reads can reuse it
++ * instead of allocating a proxy and its handler closures each time. Entries
++ * disappear with their context.
++ */
++const traceableCache = new WeakMap<object, WeakMap<object, object>>()
++
+ /** Wrap services/functions so method calls see the caller's active context. */
+ export function getTraceable<T>(ctx: Context, value: T): T {
+   if (!isObject(value)) return value
+@@ -121,7 +131,16 @@ export function getTraceable<T>(ctx: Context, value: T): T {
+   }
+   const tracker = value[symbols.tracker]
+   if (!tracker) return value
+-  return createTraceable(ctx, value, tracker)
++  let cache = traceableCache.get(ctx)
++  if (!cache) {
++    cache = new WeakMap()
++    traceableCache.set(ctx, cache)
++  }
++  const cached = cache.get(value)
++  if (cached) return cached as T
++  const traceable = createTraceable(ctx, value, tracker)
++  cache.set(value, traceable)
++  return traceable
+ }
+ 
+ /** Return a proxy that overlays readonly or writable properties onto a target. */
+@@ -207,6 +226,14 @@ function createTraceable(ctx: Context, value: any, tracker: Tracker) {
+       if (tracker.associate && ctx.reflect.props[`${tracker.associate}.${prop}`]) {
+         return Reflect.set(ctx, `${tracker.associate}.${prop}`, value, withProp(ctx, symbols.receiver, receiver))
+       }
++      // A writable (or absent) data property does not depend on the caller
++      // context: the write stores the value on the service itself. Accessor
++      // properties keep the caller shadow so their setter still resolves
++      // `this.ctx` to the writing fiber.
++      const desc = getPropertyDescriptor(target, prop)
++      if (!desc || ('value' in desc && desc.writable !== false)) {
++        return Reflect.set(target, prop, value, target)
++      }
+       const shadow = createShadow(ctx, target, tracker.property, receiver)
+       return Reflect.set(target, prop, value, shadow)
+     },

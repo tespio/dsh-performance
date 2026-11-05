@@ -1,0 +1,34 @@
+name: benchmark
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # Applies patch/0001 to the vendored sources and runs every case once at
+      # 2% iterations. This validates the harness and the patch, not the
+      # numbers: benchmark results are machine-specific and belong in results/.
+      - name: Apply patch and run the benchmark smoke test
+        run: npm run bench:quick
+
+      - name: Show the smoke summary
+        run: cat results/summary-smoke.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smoke-results
+          path: results/summary-smoke.json
+          if-no-files-found: error

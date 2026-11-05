@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "workload": "sdk-minimal profile, synthetic model, 100 turns = 200 model requests + 800 tool calls",
+    "platform": "win32 x64, i7-13700KF, Node 24.21.0",
+    "pairs": 10,
+    "method": "Built artifacts; only packages/fs/{tool-str-replace-editor,tool-fs-search}/lib swapped between arms; each arm its own process."
+  },
+  "metrics": {
+    "baseMedianMs": 4377.49235,
+    "patchedMedianMs": 2331.7360500000004,
+    "speedup": 1.8773532921961726,
+    "deltaPct": -46.733520847843394,
+    "fasterPairs": 10,
+    "pairs": 10
+  },
+  "pairs": [
+    {
+      "run": 1,
+      "baseMs": 4297.7849,
+      "patchedMs": 2351.2974000000004,
+      "toolCalls": 800
+    },
+    {
+      "run": 2,
+      "baseMs": 4745.6236,
+      "patchedMs": 2331.9186000000004,
+      "toolCalls": 800
+    },
+    {
+      "run": 3,
+      "baseMs": 4475.4041,
+      "patchedMs": 2304.7612,
+      "toolCalls": 800
+    },
+    {
+      "run": 4,
+      "baseMs": 4361.0579,
+      "patchedMs": 2192.2633,
+      "toolCalls": 800
+    },
+    {
+      "run": 5,
+      "baseMs": 4431.7035000000005,
+      "patchedMs": 2331.5535,
+      "toolCalls": 800
+    },
+    {
+      "run": 6,
+      "baseMs": 4434.2415,
+      "patchedMs": 2205.5939,
+      "toolCalls": 800
+    },
+    {
+      "run": 7,
+      "baseMs": 4393.9268,
+      "patchedMs": 2373.7828999999997,
+      "toolCalls": 800
+    },
+    {
+      "run": 8,
+      "baseMs": 4272.9188,
+      "patchedMs": 2267.055,
+      "toolCalls": 800
+    },
+    {
+      "run": 9,
+      "baseMs": 4241.6547,
+      "patchedMs": 2436.9335,
+      "toolCalls": 800
+    },
+    {
+      "run": 10,
+      "baseMs": 4348.1281,
+      "patchedMs": 2409.7642,
+      "toolCalls": 800
+    }
+  ]
+}
